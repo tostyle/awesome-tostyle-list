@@ -19,7 +19,8 @@ pub struct Repository {
     pub name: String,
     pub topics: Vec<String>,
     pub description: Option<String>,
-    // pub description: String,
+    #[serde(rename = "html_url")]
+    pub repo_url: String, // pub description: String,
 }
 
 impl Github {
@@ -51,7 +52,7 @@ impl Github {
         let res = client
             .get("https://api.github.com/user/starred")
             .headers(headers)
-            .query(&[("page", page), ("per_page", 30)])
+            .query(&[("page", page), ("per_page", 10)])
             .send()
             .await?
             .json::<Vec<Repository>>()
@@ -59,23 +60,29 @@ impl Github {
 
         return res;
     }
-    pub fn get_starred_repos_stream(&self) -> impl futures::Stream<Item = Repository> + '_ {
-        stream::unfold((self, 1, 1), |(github, page, max_page)| async move {
-            if page > max_page {
-                return None;
-            }
-            match github.get_starred_repos(Some(page), Some(max_page)).await {
-                Ok(repos) if repos.is_empty() => None,
-                // Ok(repos) => Some((stream::iter(repos.into_iter().map(Ok)), (github, page + 1))),
-                Ok(repos) => Some((stream::iter(repos), (github, page + 1, max_page))),
-                Err(err) => {
-                    println!("Error: {}", err);
-                    // Some(stream::once(async { None }), (github, page + 1))
-                    Some((stream::iter(vec![]), (github, page + 1, max_page)))
-                    // Some((stream::empty(), (github, page + 1)))
+    pub fn get_starred_repos_stream(
+        &self,
+        total_page: i16,
+    ) -> impl futures::Stream<Item = Repository> + '_ {
+        stream::unfold(
+            (self, 1, total_page),
+            |(github, page, max_page)| async move {
+                if page > max_page {
+                    return None;
                 }
-            }
-        })
+                match github.get_starred_repos(Some(page), Some(max_page)).await {
+                    Ok(repos) if repos.is_empty() => None,
+                    // Ok(repos) => Some((stream::iter(repos.into_iter().map(Ok)), (github, page + 1))),
+                    Ok(repos) => Some((stream::iter(repos), (github, page + 1, max_page))),
+                    Err(err) => {
+                        println!("Error: {}", err);
+                        // Some(stream::once(async { None }), (github, page + 1))
+                        Some((stream::iter(vec![]), (github, page + 1, max_page)))
+                        // Some((stream::empty(), (github, page + 1)))
+                    }
+                }
+            },
+        )
         .flatten()
     }
 }
