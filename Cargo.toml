@@ -14,6 +14,7 @@ anyhow = "1.0.95"
 schemars = "0.8.21"
 serde_json = "1.0.135"
 itertools = "0.14.0"
+csv = "1.3.1"
 
 [[bin]]
 name = "rig"
@@ -26,3 +27,16 @@ path = "src/main.rs"
 
 [[bin]]
 name = "schema"
+
+[[bin]]
+name = "load_starred_repositories"
+path = "src/bin/01_load_starred_repositories.rs"
+
+[[bin]]
+name = "classify_repositories"
+path = "src/bin/02_classify_repositories.rs"
+
+
+[[bin]]
+name = "create_readme"
+path = "src/bin/03_create_readme.rs"

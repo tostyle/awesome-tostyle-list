@@ -1,8 +1,11 @@
-mod github;
+// mod github;
 
-use crate::github::Github;
+// use crate::github::Github;
 use dotenv::dotenv;
-use experiment_github_star::usecases::agent_classifier::{self, RepositoryClassifier};
+use experiment_github_star::tools::{
+    agent_classifier::{self, RepositoryClassifier},
+    github::Github,
+};
 use futures::{pin_mut, stream, StreamExt};
 use itertools::Itertools;
 use rig::completion::Prompt;
@@ -31,7 +34,10 @@ async fn main() {
     }
     let github = Github::new(github_token);
     // let agent = agent_classifier::create_agent_classifier_simple();
-    let agent_extractor = agent_classifier::create_agent_classifier_extractor(categories.clone());
+    let agent_extractor: rig::extractor::Extractor<
+        rig::providers::openai::CompletionModel,
+        RepositoryClassifier,
+    > = agent_classifier::create_agent_classifier_extractor(categories.clone());
     let stream = github.get_starred_repos_stream(total_page);
 
     pin_mut!(stream);

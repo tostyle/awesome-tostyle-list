@@ -2,7 +2,7 @@ use std::path::Iter;
 
 use futures::{stream, StreamExt};
 // use futures::stream::{self, StreamExt};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, Serializer};
 
 use reqwest::{self, Response};
 
@@ -13,14 +13,23 @@ pub fn print() {
     println!("Hello, world!");
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Repository {
     pub id: i32,
     pub name: String,
+    #[serde(serialize_with = "serialize_topics")]
     pub topics: Vec<String>,
     pub description: Option<String>,
     #[serde(rename = "html_url")]
     pub repo_url: String, // pub description: String,
+    pub category: Option<String>,
+}
+fn serialize_topics<S>(topics: &Vec<String>, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    let joined_topics = topics.join(",");
+    serializer.serialize_str(&joined_topics)
 }
 
 impl Github {
